@@ -70,10 +70,11 @@ type ComplexityRoot struct {
 	}
 
 	Post struct {
-		Body  func(childComplexity int) int
-		ID    func(childComplexity int) int
-		Title func(childComplexity int) int
-		User  func(childComplexity int) int
+		Body            func(childComplexity int) int
+		ID              func(childComplexity int) int
+		NumberOfComment func(childComplexity int) int
+		Title           func(childComplexity int) int
+		User            func(childComplexity int) int
 	}
 
 	Query struct {
@@ -253,6 +254,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Post.ID(childComplexity), true
+
+	case "Post.numberOfComment":
+		if e.complexity.Post.NumberOfComment == nil {
+			break
+		}
+
+		return e.complexity.Post.NumberOfComment(childComplexity), true
 
 	case "Post.title":
 		if e.complexity.Post.Title == nil {
@@ -511,6 +519,7 @@ type Post {
   title: String!
   body: String!
   user: User!
+  numberOfComment: Int!
 }
 
 type Comment{
@@ -1267,6 +1276,41 @@ func (ec *executionContext) _Post_user(ctx context.Context, field graphql.Collec
 	res := resTmp.(*model.User)
 	fc.Result = res
 	return ec.marshalNUser2ᚖgithubᚗcomᚋingkillerᚋhackernewsᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Post_numberOfComment(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Post",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NumberOfComment, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_stories(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3597,6 +3641,16 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 		case "user":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Post_user(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "numberOfComment":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Post_numberOfComment(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)

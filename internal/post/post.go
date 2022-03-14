@@ -3,18 +3,20 @@ package post
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/ingkiller/hackernews/internal/comment"
 	"github.com/ingkiller/hackernews/internal/user"
 	"io/ioutil"
-	"log"
 	"net/http"
+	"sync"
 )
 
 type Post struct {
-	Id     int
-	Title  string
-	Body   string
-	UserId int
-	User   user.User
+	Id              int
+	Title           string
+	Body            string
+	UserId          int
+	User            user.User
+	NumberOfComment int
 }
 
 func GetAll() []Post {
@@ -42,17 +44,54 @@ func GetAll() []Post {
 	var responseObject []Post
 	json.Unmarshal(bodyBytes, &responseObject)
 	//	var posts []Post
-	log.Printf("Unmarshaled: %v", responseObject)
+	//log.Printf("Unmarshaled: %v", responseObject)
 	var result []Post
-	for i := 0; i < 3; i++ {
-		var temp user.User
-		temp = user.GetUserById(responseObject[i].UserId)
-		newPost := responseObject[i]
-		newPost.User = temp
-		result = append(result, newPost)
+	ch := make(chan user.User)
+	chComment := make(chan int)
+	go func() {
+		var wg sync.WaitGroup
+		wg.Add(3)
+		for j := 0; j < 3; j++ {
+			go func(p Post) {
+				defer wg.Done()
+				ch <- user.GetUserById(p.UserId)
 
+			}(responseObject[j])
+		}
+		wg.Wait()
+		close(ch)
+	}()
+
+	go func() {
+		var wgComment sync.WaitGroup
+		wgComment.Add(3)
+		for j := 0; j < 3; j++ {
+			go func(p Post) {
+				defer wgComment.Done()
+				chComment <- comment.CountCommentByPost(p.Id)
+			}(responseObject[j])
+		}
+		wgComment.Wait()
+		close(chComment)
+	}()
+
+	var users []user.User
+	for c := range ch {
+		users = append(users, c)
 	}
-	log.Printf("result: %v", result)
+
+	var numberOfComment []int
+	for c := range chComment {
+		numberOfComment = append(numberOfComment, c)
+	}
+
+	for i := 0; i < 3; i++ {
+		newPost := responseObject[i]
+		newPost.User = users[i]
+		newPost.NumberOfComment = numberOfComment[i]
+		result = append(result, newPost)
+	}
+	//	log.Printf("result: %v", result)
 	return result
 	/*
 		var stories []Story

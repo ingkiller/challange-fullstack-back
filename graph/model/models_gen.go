@@ -25,10 +25,11 @@ type Photo struct {
 }
 
 type Post struct {
-	ID    int    `json:"id"`
-	Title string `json:"title"`
-	Body  string `json:"body"`
-	User  *User  `json:"user"`
+	ID              int    `json:"id"`
+	Title           string `json:"title"`
+	Body            string `json:"body"`
+	User            *User  `json:"user"`
+	NumberOfComment int    `json:"numberOfComment"`
 }
 
 type Story struct {

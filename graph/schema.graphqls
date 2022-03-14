@@ -23,6 +23,7 @@ type Post {
   title: String!
   body: String!
   user: User!
+  numberOfComment: Int!
 }
 
 type Comment{

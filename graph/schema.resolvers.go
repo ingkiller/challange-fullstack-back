@@ -6,6 +6,7 @@ package graph
 import (
 	"context"
 	"fmt"
+
 	"github.com/ingkiller/hackernews/graph/generated"
 	"github.com/ingkiller/hackernews/graph/model"
 	"github.com/ingkiller/hackernews/internal/post"
@@ -44,9 +45,10 @@ func (r *queryResolver) Posts(ctx context.Context) ([]*model.Post, error) {
 	for _, post := range dbLinks {
 
 		result = append(result, &model.Post{ID: post.Id,
-			Title: post.Title,
-			Body:  post.Body,
-			User:  &model.User{Name: post.User.Name, Username: post.User.Username, Website: post.User.Website},
+			Title:           post.Title,
+			Body:            post.Body,
+			NumberOfComment: post.NumberOfComment,
+			User:            &model.User{Name: post.User.Name, Username: post.User.Username, Website: post.User.Website},
 		})
 	}
 
