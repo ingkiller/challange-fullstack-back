@@ -1,0 +1,70 @@
+
+type Story {
+  id: Int!
+  title: String!
+  by: String!
+  descendants : Int!
+  kids : [Int!]!
+  score : Int!
+  time : Int!
+  type  : String!
+  url : String!
+}
+
+type User {
+  id: Int
+  name: String!
+  username: String!
+  website: String!
+}
+
+type Post {
+  id: Int!
+  title: String!
+  body: String!
+  user: User!
+}
+
+type Comment{
+  id: Int!
+  name: String!
+  email: String!
+  body: String!
+  postId: Post!
+}
+
+type Album{
+  id: Int!
+  title: String!
+  user: User!
+}
+
+type Photo{
+  id: Int!
+  albumId: Int!
+  title: String!
+  Url : String!
+  thumbnailUrl: String!
+}
+
+type Todo {
+  id:Int!
+  userId:Int!
+  title:String!
+  completed: String!
+}
+
+type Query {
+  stories: [Story!]!
+  posts:[Post!]
+  todo: [Todo!]!
+  albums:[Album!]!
+  photos:[Photo!]!
+}
+input Task{
+  idTask:Int!
+}
+type Mutation{
+  toggleTask(input: Task!):Todo!
+}
+
