@@ -31,7 +31,7 @@ type Comment{
   name: String!
   email: String!
   body: String!
-  postId: Post!
+  postId: Int!
 }
 
 type Album{
@@ -54,18 +54,23 @@ type Todo {
   title:String!
   completed: String!
 }
-
+input PostId{
+  postId:Int!
+}
 type Query {
   stories: [Story!]!
   posts:[Post!]
   todo: [Todo!]!
   albums:[Album!]!
   photos:[Photo!]!
+  getCommentByPostId(input: PostId!):[Comment!]!
 }
 input Task{
   idTask:Int!
 }
+
 type Mutation{
   toggleTask(input: Task!):Todo!
+  getCommentByPostIdMutation(input: PostId!):[Comment!]!
 }
 

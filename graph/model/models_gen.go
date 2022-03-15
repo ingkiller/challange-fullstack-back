@@ -13,7 +13,7 @@ type Comment struct {
 	Name   string `json:"name"`
 	Email  string `json:"email"`
 	Body   string `json:"body"`
-	PostID *Post  `json:"postId"`
+	PostID int    `json:"postId"`
 }
 
 type Photo struct {
@@ -30,6 +30,10 @@ type Post struct {
 	Body            string `json:"body"`
 	User            *User  `json:"user"`
 	NumberOfComment int    `json:"numberOfComment"`
+}
+
+type PostID struct {
+	PostID int `json:"postId"`
 }
 
 type Story struct {

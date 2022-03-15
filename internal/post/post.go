@@ -43,8 +43,7 @@ func GetAll() []Post {
 
 	var responseObject []Post
 	json.Unmarshal(bodyBytes, &responseObject)
-	//	var posts []Post
-	//log.Printf("Unmarshaled: %v", responseObject)
+
 	var result []Post
 	ch := make(chan user.User)
 	chComment := make(chan int)
@@ -55,7 +54,6 @@ func GetAll() []Post {
 			go func(p Post) {
 				defer wg.Done()
 				ch <- user.GetUserById(p.UserId)
-
 			}(responseObject[j])
 		}
 		wg.Wait()
@@ -91,27 +89,6 @@ func GetAll() []Post {
 		newPost.NumberOfComment = numberOfComment[i]
 		result = append(result, newPost)
 	}
-	//	log.Printf("result: %v", result)
+
 	return result
-	/*
-		var stories []Story
-		c := make(chan Story)
-		go func() {
-			var wg sync.WaitGroup
-			wg.Add(3)
-			for j := 0; j < 3; j++ {
-				go func(s uint) {
-					defer wg.Done()
-					c <- GetStoryById(s)
-				}(responseObject[j])
-			}
-			wg.Wait()
-			close(c)
-		}()
-		for v := range c {
-			stories = append(stories, v)
-		}
-		log.Printf("Unmarshaled: %v", stories)
-		return stories
-	*/
 }

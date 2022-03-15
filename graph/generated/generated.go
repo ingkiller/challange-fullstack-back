@@ -58,7 +58,8 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		ToggleTask func(childComplexity int, input model.Task) int
+		GetCommentByPostIDMutation func(childComplexity int, input model.PostID) int
+		ToggleTask                 func(childComplexity int, input model.Task) int
 	}
 
 	Photo struct {
@@ -78,11 +79,12 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Albums  func(childComplexity int) int
-		Photos  func(childComplexity int) int
-		Posts   func(childComplexity int) int
-		Stories func(childComplexity int) int
-		Todo    func(childComplexity int) int
+		Albums             func(childComplexity int) int
+		GetCommentByPostID func(childComplexity int, input model.PostID) int
+		Photos             func(childComplexity int) int
+		Posts              func(childComplexity int) int
+		Stories            func(childComplexity int) int
+		Todo               func(childComplexity int) int
 	}
 
 	Story struct {
@@ -114,6 +116,7 @@ type ComplexityRoot struct {
 
 type MutationResolver interface {
 	ToggleTask(ctx context.Context, input model.Task) (*model.Todo, error)
+	GetCommentByPostIDMutation(ctx context.Context, input model.PostID) ([]*model.Comment, error)
 }
 type QueryResolver interface {
 	Stories(ctx context.Context) ([]*model.Story, error)
@@ -121,6 +124,7 @@ type QueryResolver interface {
 	Todo(ctx context.Context) ([]*model.Todo, error)
 	Albums(ctx context.Context) ([]*model.Album, error)
 	Photos(ctx context.Context) ([]*model.Photo, error)
+	GetCommentByPostID(ctx context.Context, input model.PostID) ([]*model.Comment, error)
 }
 
 type executableSchema struct {
@@ -193,6 +197,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Comment.PostID(childComplexity), true
+
+	case "Mutation.getCommentByPostIdMutation":
+		if e.complexity.Mutation.GetCommentByPostIDMutation == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_getCommentByPostIdMutation_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.GetCommentByPostIDMutation(childComplexity, args["input"].(model.PostID)), true
 
 	case "Mutation.toggleTask":
 		if e.complexity.Mutation.ToggleTask == nil {
@@ -282,6 +298,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Albums(childComplexity), true
+
+	case "Query.getCommentByPostId":
+		if e.complexity.Query.GetCommentByPostID == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getCommentByPostId_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetCommentByPostID(childComplexity, args["input"].(model.PostID)), true
 
 	case "Query.photos":
 		if e.complexity.Query.Photos == nil {
@@ -527,7 +555,7 @@ type Comment{
   name: String!
   email: String!
   body: String!
-  postId: Post!
+  postId: Int!
 }
 
 type Album{
@@ -550,19 +578,24 @@ type Todo {
   title:String!
   completed: String!
 }
-
+input PostId{
+  postId:Int!
+}
 type Query {
   stories: [Story!]!
   posts:[Post!]
   todo: [Todo!]!
   albums:[Album!]!
   photos:[Photo!]!
+  getCommentByPostId(input: PostId!):[Comment!]!
 }
 input Task{
   idTask:Int!
 }
+
 type Mutation{
   toggleTask(input: Task!):Todo!
+  getCommentByPostIdMutation(input: PostId!):[Comment!]!
 }
 
 `, BuiltIn: false},
@@ -572,6 +605,21 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_Mutation_getCommentByPostIdMutation_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.PostID
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNPostId2githubᚗcomᚋingkillerᚋhackernewsᚋgraphᚋmodelᚐPostID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
 
 func (ec *executionContext) field_Mutation_toggleTask_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -600,6 +648,21 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		}
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getCommentByPostId_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.PostID
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNPostId2githubᚗcomᚋingkillerᚋhackernewsᚋgraphᚋmodelᚐPostID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -916,9 +979,9 @@ func (ec *executionContext) _Comment_postId(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Post)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalNPost2ᚖgithubᚗcomᚋingkillerᚋhackernewsᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_toggleTask(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -961,6 +1024,48 @@ func (ec *executionContext) _Mutation_toggleTask(ctx context.Context, field grap
 	res := resTmp.(*model.Todo)
 	fc.Result = res
 	return ec.marshalNTodo2ᚖgithubᚗcomᚋingkillerᚋhackernewsᚋgraphᚋmodelᚐTodo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_getCommentByPostIdMutation(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_getCommentByPostIdMutation_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().GetCommentByPostIDMutation(rctx, args["input"].(model.PostID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Comment)
+	fc.Result = res
+	return ec.marshalNComment2ᚕᚖgithubᚗcomᚋingkillerᚋhackernewsᚋgraphᚋmodelᚐCommentᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Photo_id(ctx context.Context, field graphql.CollectedField, obj *model.Photo) (ret graphql.Marshaler) {
@@ -1483,6 +1588,48 @@ func (ec *executionContext) _Query_photos(ctx context.Context, field graphql.Col
 	res := resTmp.([]*model.Photo)
 	fc.Result = res
 	return ec.marshalNPhoto2ᚕᚖgithubᚗcomᚋingkillerᚋhackernewsᚋgraphᚋmodelᚐPhotoᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_getCommentByPostId(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_getCommentByPostId_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetCommentByPostID(rctx, args["input"].(model.PostID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Comment)
+	fc.Result = res
+	return ec.marshalNComment2ᚕᚖgithubᚗcomᚋingkillerᚋhackernewsᚋgraphᚋmodelᚐCommentᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3334,6 +3481,29 @@ func (ec *executionContext) ___Type_specifiedByURL(ctx context.Context, field gr
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputPostId(ctx context.Context, obj interface{}) (model.PostID, error) {
+	var it model.PostID
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "postId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postId"))
+			it.PostID, err = ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputTask(ctx context.Context, obj interface{}) (model.Task, error) {
 	var it model.Task
 	asMap := map[string]interface{}{}
@@ -3509,6 +3679,16 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "toggleTask":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_toggleTask(ctx, field)
+			}
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "getCommentByPostIdMutation":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_getCommentByPostIdMutation(ctx, field)
 			}
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
@@ -3787,6 +3967,29 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_photos(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "getCommentByPostId":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getCommentByPostId(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -4547,6 +4750,60 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) marshalNComment2ᚕᚖgithubᚗcomᚋingkillerᚋhackernewsᚋgraphᚋmodelᚐCommentᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Comment) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNComment2ᚖgithubᚗcomᚋingkillerᚋhackernewsᚋgraphᚋmodelᚐComment(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNComment2ᚖgithubᚗcomᚋingkillerᚋhackernewsᚋgraphᚋmodelᚐComment(ctx context.Context, sel ast.SelectionSet, v *model.Comment) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Comment(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
 	res, err := graphql.UnmarshalInt(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -4656,6 +4913,11 @@ func (ec *executionContext) marshalNPost2ᚖgithubᚗcomᚋingkillerᚋhackernew
 		return graphql.Null
 	}
 	return ec._Post(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNPostId2githubᚗcomᚋingkillerᚋhackernewsᚋgraphᚋmodelᚐPostID(ctx context.Context, v interface{}) (model.PostID, error) {
+	res, err := ec.unmarshalInputPostId(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNStory2ᚕᚖgithubᚗcomᚋingkillerᚋhackernewsᚋgraphᚋmodelᚐStoryᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Story) graphql.Marshaler {

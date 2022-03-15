@@ -9,11 +9,29 @@ import (
 
 	"github.com/ingkiller/hackernews/graph/generated"
 	"github.com/ingkiller/hackernews/graph/model"
+	"github.com/ingkiller/hackernews/internal/comment"
 	"github.com/ingkiller/hackernews/internal/post"
 	"github.com/ingkiller/hackernews/internal/story"
 )
 
 func (r *mutationResolver) ToggleTask(ctx context.Context, input model.Task) (*model.Todo, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *mutationResolver) GetCommentByPostIDMutation(ctx context.Context, input model.PostID) ([]*model.Comment, error) {
+	var result []*model.Comment
+	var comments []comment.Comment
+	comments = comment.GetCommentsByPost(input.PostID)
+	for _, comment := range comments {
+		result = append(result, &model.Comment{ID: comment.Id,
+			PostID: input.PostID,
+			Name:   comment.Name,
+			Body:   comment.Body,
+			Email:  comment.Email,
+		})
+	}
+
+	return result, nil
 	panic(fmt.Errorf("not implemented"))
 }
 
@@ -65,6 +83,23 @@ func (r *queryResolver) Albums(ctx context.Context) ([]*model.Album, error) {
 }
 
 func (r *queryResolver) Photos(ctx context.Context) ([]*model.Photo, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *queryResolver) GetCommentByPostID(ctx context.Context, input model.PostID) ([]*model.Comment, error) {
+	var result []*model.Comment
+	var comments []comment.Comment
+	comments = comment.GetCommentsByPost(input.PostID)
+	for _, comment := range comments {
+		result = append(result, &model.Comment{ID: comment.Id,
+			PostID: input.PostID,
+			Name:   comment.Name,
+			Body:   comment.Body,
+			Email:  comment.Email,
+		})
+	}
+
+	return result, nil
 	panic(fmt.Errorf("not implemented"))
 }
 
