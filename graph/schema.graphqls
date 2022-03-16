@@ -52,7 +52,7 @@ type Todo {
   id:Int!
   userId:Int!
   title:String!
-  completed: String!
+  completed: Boolean!
 }
 input PostId{
   postId:Int!
@@ -64,13 +64,10 @@ type Query {
   albums:[Album!]!
   photos:[Photo!]!
   getCommentByPostId(postId:Int!):[Comment!]!
-}
-input Task{
-  idTask:Int!
+  getTodoByUserId(userId: Int!):[Todo!]!
 }
 
 type Mutation{
-  toggleTask(input: Task!):Todo!
-  getCommentByPostIdMutation(input: PostId!):[Comment!]!
+  toggleTask(todoId: Int!):Boolean!
 }
 

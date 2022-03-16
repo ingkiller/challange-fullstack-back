@@ -58,8 +58,7 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		GetCommentByPostIDMutation func(childComplexity int, input model.PostID) int
-		ToggleTask                 func(childComplexity int, input model.Task) int
+		ToggleTask func(childComplexity int, todoID int) int
 	}
 
 	Photo struct {
@@ -81,6 +80,7 @@ type ComplexityRoot struct {
 	Query struct {
 		Albums             func(childComplexity int) int
 		GetCommentByPostID func(childComplexity int, postID int) int
+		GetTodoByUserID    func(childComplexity int, userID int) int
 		Photos             func(childComplexity int) int
 		Posts              func(childComplexity int) int
 		Stories            func(childComplexity int) int
@@ -115,8 +115,7 @@ type ComplexityRoot struct {
 }
 
 type MutationResolver interface {
-	ToggleTask(ctx context.Context, input model.Task) (*model.Todo, error)
-	GetCommentByPostIDMutation(ctx context.Context, input model.PostID) ([]*model.Comment, error)
+	ToggleTask(ctx context.Context, todoID int) (bool, error)
 }
 type QueryResolver interface {
 	Stories(ctx context.Context) ([]*model.Story, error)
@@ -125,6 +124,7 @@ type QueryResolver interface {
 	Albums(ctx context.Context) ([]*model.Album, error)
 	Photos(ctx context.Context) ([]*model.Photo, error)
 	GetCommentByPostID(ctx context.Context, postID int) ([]*model.Comment, error)
+	GetTodoByUserID(ctx context.Context, userID int) ([]*model.Todo, error)
 }
 
 type executableSchema struct {
@@ -198,18 +198,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Comment.PostID(childComplexity), true
 
-	case "Mutation.getCommentByPostIdMutation":
-		if e.complexity.Mutation.GetCommentByPostIDMutation == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_getCommentByPostIdMutation_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.GetCommentByPostIDMutation(childComplexity, args["input"].(model.PostID)), true
-
 	case "Mutation.toggleTask":
 		if e.complexity.Mutation.ToggleTask == nil {
 			break
@@ -220,7 +208,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.ToggleTask(childComplexity, args["input"].(model.Task)), true
+		return e.complexity.Mutation.ToggleTask(childComplexity, args["todoId"].(int)), true
 
 	case "Photo.albumId":
 		if e.complexity.Photo.AlbumID == nil {
@@ -310,6 +298,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.GetCommentByPostID(childComplexity, args["postId"].(int)), true
+
+	case "Query.getTodoByUserId":
+		if e.complexity.Query.GetTodoByUserID == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getTodoByUserId_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetTodoByUserID(childComplexity, args["userId"].(int)), true
 
 	case "Query.photos":
 		if e.complexity.Query.Photos == nil {
@@ -576,7 +576,7 @@ type Todo {
   id:Int!
   userId:Int!
   title:String!
-  completed: String!
+  completed: Boolean!
 }
 input PostId{
   postId:Int!
@@ -588,14 +588,11 @@ type Query {
   albums:[Album!]!
   photos:[Photo!]!
   getCommentByPostId(postId:Int!):[Comment!]!
-}
-input Task{
-  idTask:Int!
+  getTodoByUserId(userId: Int!):[Todo!]!
 }
 
 type Mutation{
-  toggleTask(input: Task!):Todo!
-  getCommentByPostIdMutation(input: PostId!):[Comment!]!
+  toggleTask(todoId: Int!):Boolean!
 }
 
 `, BuiltIn: false},
@@ -606,33 +603,18 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // region    ***************************** args.gotpl *****************************
 
-func (ec *executionContext) field_Mutation_getCommentByPostIdMutation_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 model.PostID
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNPostId2githubᚗcomᚋingkillerᚋhackernewsᚋgraphᚋmodelᚐPostID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_toggleTask_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.Task
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNTask2githubᚗcomᚋingkillerᚋhackernewsᚋgraphᚋmodelᚐTask(ctx, tmp)
+	var arg0 int
+	if tmp, ok := rawArgs["todoId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("todoId"))
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["input"] = arg0
+	args["todoId"] = arg0
 	return args, nil
 }
 
@@ -663,6 +645,21 @@ func (ec *executionContext) field_Query_getCommentByPostId_args(ctx context.Cont
 		}
 	}
 	args["postId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getTodoByUserId_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["userId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["userId"] = arg0
 	return args, nil
 }
 
@@ -1009,7 +1006,7 @@ func (ec *executionContext) _Mutation_toggleTask(ctx context.Context, field grap
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().ToggleTask(rctx, args["input"].(model.Task))
+		return ec.resolvers.Mutation().ToggleTask(rctx, args["todoId"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1021,51 +1018,9 @@ func (ec *executionContext) _Mutation_toggleTask(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Todo)
+	res := resTmp.(bool)
 	fc.Result = res
-	return ec.marshalNTodo2ᚖgithubᚗcomᚋingkillerᚋhackernewsᚋgraphᚋmodelᚐTodo(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Mutation_getCommentByPostIdMutation(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_getCommentByPostIdMutation_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	fc.Args = args
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().GetCommentByPostIDMutation(rctx, args["input"].(model.PostID))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]*model.Comment)
-	fc.Result = res
-	return ec.marshalNComment2ᚕᚖgithubᚗcomᚋingkillerᚋhackernewsᚋgraphᚋmodelᚐCommentᚄ(ctx, field.Selections, res)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Photo_id(ctx context.Context, field graphql.CollectedField, obj *model.Photo) (ret graphql.Marshaler) {
@@ -1632,6 +1587,48 @@ func (ec *executionContext) _Query_getCommentByPostId(ctx context.Context, field
 	return ec.marshalNComment2ᚕᚖgithubᚗcomᚋingkillerᚋhackernewsᚋgraphᚋmodelᚐCommentᚄ(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Query_getTodoByUserId(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_getTodoByUserId_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetTodoByUserID(rctx, args["userId"].(int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Todo)
+	fc.Result = res
+	return ec.marshalNTodo2ᚕᚖgithubᚗcomᚋingkillerᚋhackernewsᚋgraphᚋmodelᚐTodoᚄ(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -2153,9 +2150,9 @@ func (ec *executionContext) _Todo_completed(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(bool)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _User_id(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
@@ -3504,29 +3501,6 @@ func (ec *executionContext) unmarshalInputPostId(ctx context.Context, obj interf
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputTask(ctx context.Context, obj interface{}) (model.Task, error) {
-	var it model.Task
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	for k, v := range asMap {
-		switch k {
-		case "idTask":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idTask"))
-			it.IDTask, err = ec.unmarshalNInt2int(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		}
-	}
-
-	return it, nil
-}
-
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -3679,16 +3653,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "toggleTask":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_toggleTask(ctx, field)
-			}
-
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "getCommentByPostIdMutation":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_getCommentByPostIdMutation(ctx, field)
 			}
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
@@ -3990,6 +3954,29 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_getCommentByPostId(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "getTodoByUserId":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getTodoByUserId(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -4915,11 +4902,6 @@ func (ec *executionContext) marshalNPost2ᚖgithubᚗcomᚋingkillerᚋhackernew
 	return ec._Post(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNPostId2githubᚗcomᚋingkillerᚋhackernewsᚋgraphᚋmodelᚐPostID(ctx context.Context, v interface{}) (model.PostID, error) {
-	res, err := ec.unmarshalInputPostId(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
 func (ec *executionContext) marshalNStory2ᚕᚖgithubᚗcomᚋingkillerᚋhackernewsᚋgraphᚋmodelᚐStoryᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Story) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -4987,15 +4969,6 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 		}
 	}
 	return res
-}
-
-func (ec *executionContext) unmarshalNTask2githubᚗcomᚋingkillerᚋhackernewsᚋgraphᚋmodelᚐTask(ctx context.Context, v interface{}) (model.Task, error) {
-	res, err := ec.unmarshalInputTask(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNTodo2githubᚗcomᚋingkillerᚋhackernewsᚋgraphᚋmodelᚐTodo(ctx context.Context, sel ast.SelectionSet, v model.Todo) graphql.Marshaler {
-	return ec._Todo(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNTodo2ᚕᚖgithubᚗcomᚋingkillerᚋhackernewsᚋgraphᚋmodelᚐTodoᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Todo) graphql.Marshaler {

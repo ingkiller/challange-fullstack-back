@@ -48,15 +48,11 @@ type Story struct {
 	URL         string `json:"url"`
 }
 
-type Task struct {
-	IDTask int `json:"idTask"`
-}
-
 type Todo struct {
 	ID        int    `json:"id"`
 	UserID    int    `json:"userId"`
 	Title     string `json:"title"`
-	Completed string `json:"completed"`
+	Completed bool   `json:"completed"`
 }
 
 type User struct {
