@@ -80,7 +80,7 @@ type ComplexityRoot struct {
 
 	Query struct {
 		Albums             func(childComplexity int) int
-		GetCommentByPostID func(childComplexity int, input model.PostID) int
+		GetCommentByPostID func(childComplexity int, postID int) int
 		Photos             func(childComplexity int) int
 		Posts              func(childComplexity int) int
 		Stories            func(childComplexity int) int
@@ -124,7 +124,7 @@ type QueryResolver interface {
 	Todo(ctx context.Context) ([]*model.Todo, error)
 	Albums(ctx context.Context) ([]*model.Album, error)
 	Photos(ctx context.Context) ([]*model.Photo, error)
-	GetCommentByPostID(ctx context.Context, input model.PostID) ([]*model.Comment, error)
+	GetCommentByPostID(ctx context.Context, postID int) ([]*model.Comment, error)
 }
 
 type executableSchema struct {
@@ -309,7 +309,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetCommentByPostID(childComplexity, args["input"].(model.PostID)), true
+		return e.complexity.Query.GetCommentByPostID(childComplexity, args["postId"].(int)), true
 
 	case "Query.photos":
 		if e.complexity.Query.Photos == nil {
@@ -587,7 +587,7 @@ type Query {
   todo: [Todo!]!
   albums:[Album!]!
   photos:[Photo!]!
-  getCommentByPostId(input: PostId!):[Comment!]!
+  getCommentByPostId(postId:Int!):[Comment!]!
 }
 input Task{
   idTask:Int!
@@ -654,15 +654,15 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 func (ec *executionContext) field_Query_getCommentByPostId_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.PostID
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNPostId2githubᚗcomᚋingkillerᚋhackernewsᚋgraphᚋmodelᚐPostID(ctx, tmp)
+	var arg0 int
+	if tmp, ok := rawArgs["postId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postId"))
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["input"] = arg0
+	args["postId"] = arg0
 	return args, nil
 }
 
@@ -1615,7 +1615,7 @@ func (ec *executionContext) _Query_getCommentByPostId(ctx context.Context, field
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetCommentByPostID(rctx, args["input"].(model.PostID))
+		return ec.resolvers.Query().GetCommentByPostID(rctx, args["postId"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)

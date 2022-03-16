@@ -63,7 +63,7 @@ type Query {
   todo: [Todo!]!
   albums:[Album!]!
   photos:[Photo!]!
-  getCommentByPostId(input: PostId!):[Comment!]!
+  getCommentByPostId(postId:Int!):[Comment!]!
 }
 input Task{
   idTask:Int!
