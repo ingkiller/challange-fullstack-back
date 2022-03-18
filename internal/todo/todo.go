@@ -7,14 +7,23 @@ import (
 	"net/http"
 )
 
-type List struct {
+type Task struct {
 	Id        int
 	UserId    int
 	Title     string
 	Completed bool
 }
 
-func GetListByUserId(userId int) []List {
+var TasksById = make(map[int]*Task)
+var nextTask = 1
+
+func store(task Task) {
+	TasksById[task.Id] = &task
+	nextTask++
+}
+
+func GetListByUserId(userId int) []Task {
+
 	client := &http.Client{}
 	userUrl := fmt.Sprint("https://jsonplaceholder.typicode.com/todos?userId=", userId)
 	req, err := http.NewRequest(http.MethodGet, userUrl, nil)
@@ -25,11 +34,34 @@ func GetListByUserId(userId int) []List {
 	}
 	defer resp.Body.Close()
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
-	var result []List
+	var result []Task
 	json.Unmarshal(bodyBytes, &result)
+
+	for _, task := range result {
+		store(task)
+	}
 	return result
 }
 
-func ToggleTask(taskId int) bool {
-	return true
+func ToggleTask(taskId int) Task {
+	task := TasksById[taskId]
+	task.Completed = !task.Completed
+	TasksById[taskId] = task
+	return *task
+}
+
+func CreateTask(title string) Task {
+	newTask := Task{
+		Id:        nextTask,
+		UserId:    1,
+		Title:     title,
+		Completed: false,
+	}
+	nextTask++
+	store(newTask)
+	return newTask
+}
+
+func DeleteTask(userId int) {
+	delete(TasksById, userId)
 }

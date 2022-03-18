@@ -48,7 +48,7 @@ type Photo{
   thumbnailUrl: String!
 }
 
-type Todo {
+type Task {
   id:Int!
   userId:Int!
   title:String!
@@ -60,14 +60,16 @@ input PostId{
 type Query {
   stories: [Story!]!
   posts:[Post!]
-  todo: [Todo!]!
+  tasks: [Task!]!
   albums:[Album!]!
   photos:[Photo!]!
   getCommentByPostId(postId:Int!):[Comment!]!
-  getTodoByUserId(userId: Int!):[Todo!]!
+  getTodoByUserId(userId: Int!):[Task!]!
 }
 
 type Mutation{
-  toggleTask(todoId: Int!):Boolean!
+  toggleTask(taskId: Int!):Task!
+  createTask(title: String!):Task!
+  deleteTask(taskId: Int!):Boolean!
 }
 

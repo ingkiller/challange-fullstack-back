@@ -15,8 +15,32 @@ import (
 	"github.com/ingkiller/hackernews/internal/todo"
 )
 
-func (r *mutationResolver) ToggleTask(ctx context.Context, todoID int) (bool, error) {
+func (r *mutationResolver) ToggleTask(ctx context.Context, taskID int) (*model.Task, error) {
+	var task = todo.ToggleTask(taskID)
+	var result = &model.Task{
+		ID:        task.Id,
+		UserID:    task.UserId,
+		Title:     task.Title,
+		Completed: task.Completed,
+	}
+	return result, nil
+}
+
+func (r *mutationResolver) CreateTask(ctx context.Context, title string) (*model.Task, error) {
+	var newList = todo.CreateTask(title)
+	var result = &model.Task{
+		ID:        newList.Id,
+		UserID:    newList.UserId,
+		Title:     newList.Title,
+		Completed: newList.Completed,
+	}
+	return result, nil
 	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *mutationResolver) DeleteTask(ctx context.Context, taskID int) (bool, error) {
+	todo.DeleteTask(taskID)
+	return true, nil
 }
 
 func (r *queryResolver) Stories(ctx context.Context) ([]*model.Story, error) {
@@ -55,7 +79,7 @@ func (r *queryResolver) Posts(ctx context.Context) ([]*model.Post, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) Todo(ctx context.Context) ([]*model.Todo, error) {
+func (r *queryResolver) Tasks(ctx context.Context) ([]*model.Task, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
@@ -84,12 +108,12 @@ func (r *queryResolver) GetCommentByPostID(ctx context.Context, postID int) ([]*
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) GetTodoByUserID(ctx context.Context, userID int) ([]*model.Todo, error) {
-	var result []*model.Todo
-	var list []todo.List
+func (r *queryResolver) GetTodoByUserID(ctx context.Context, userID int) ([]*model.Task, error) {
+	var result []*model.Task
+	var list []todo.Task
 	list = todo.GetListByUserId(userID)
 	for _, task := range list {
-		result = append(result, &model.Todo{ID: task.Id,
+		result = append(result, &model.Task{ID: task.Id,
 			UserID:    task.UserId,
 			Title:     task.Title,
 			Completed: task.Completed,
@@ -106,26 +130,3 @@ func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-func (r *mutationResolver) GetCommentByPostIDMutation(ctx context.Context, input model.PostID) ([]*model.Comment, error) {
-	var result []*model.Comment
-	var comments []comment.Comment
-	comments = comment.GetCommentsByPost(input.PostID)
-	for _, comment := range comments {
-		result = append(result, &model.Comment{ID: comment.Id,
-			PostID: input.PostID,
-			Name:   comment.Name,
-			Body:   comment.Body,
-			Email:  comment.Email,
-		})
-	}
-
-	return result, nil
-	panic(fmt.Errorf("not implemented"))
-}
