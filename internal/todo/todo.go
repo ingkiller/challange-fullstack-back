@@ -62,6 +62,6 @@ func CreateTask(title string) Task {
 	return newTask
 }
 
-func DeleteTask(userId int) {
-	delete(TasksById, userId)
+func DeleteTask(taskId int) {
+	delete(TasksById, taskId)
 }
