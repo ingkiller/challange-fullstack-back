@@ -6,6 +6,7 @@ package graph
 import (
 	"context"
 	"fmt"
+	"github.com/ingkiller/hackernews/internal/auth"
 
 	"github.com/ingkiller/hackernews/graph/generated"
 	"github.com/ingkiller/hackernews/graph/model"
@@ -13,6 +14,8 @@ import (
 	"github.com/ingkiller/hackernews/internal/post"
 	"github.com/ingkiller/hackernews/internal/story"
 	"github.com/ingkiller/hackernews/internal/todo"
+	"github.com/ingkiller/hackernews/internal/user"
+	"github.com/ingkiller/hackernews/pkg/jwt"
 )
 
 func (r *mutationResolver) ToggleTask(ctx context.Context, taskID int) (*model.Task, error) {
@@ -41,6 +44,24 @@ func (r *mutationResolver) CreateTask(ctx context.Context, title string) (*model
 func (r *mutationResolver) DeleteTask(ctx context.Context, taskID int) (bool, error) {
 	todo.DeleteTask(taskID)
 	return true, nil
+}
+
+func (r *mutationResolver) Login(ctx context.Context, username string, password string) (string, error) {
+	var user user.User
+	user.Username = username
+	user.Password = password
+
+	correct := user.Authenticate()
+	if !correct {
+		// 1
+		return "", nil
+	}
+	token, err := jwt.GenerateToken(user.Username)
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
 }
 
 func (r *queryResolver) Stories(ctx context.Context) ([]*model.Story, error) {
@@ -111,6 +132,14 @@ func (r *queryResolver) GetCommentByPostID(ctx context.Context, postID int) ([]*
 func (r *queryResolver) GetTodoByUserID(ctx context.Context, userID int) ([]*model.Task, error) {
 	var result []*model.Task
 	var list []todo.Task
+
+	user := auth.ForContext(ctx)
+
+	if user == nil {
+		fmt.Print("access denied GetTodoByUserID v%:")
+		//	return result, fmt.Errorf("access denied bad bad")
+	}
+
 	list = todo.GetListByUserId(userID)
 	for _, task := range list {
 		result = append(result, &model.Task{ID: task.Id,

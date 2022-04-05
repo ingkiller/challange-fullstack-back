@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"sort"
 )
 
 type Task struct {
@@ -23,6 +24,18 @@ func store(task Task) {
 }
 
 func GetListByUserId(userId int) []Task {
+	var result []Task
+	fmt.Print("len TasksById : %v", len(TasksById))
+	if len(TasksById) > 0 {
+
+		for _, t := range TasksById {
+			result = append(result, *t)
+		}
+		sort.Slice(result, func(i, j int) bool {
+			return result[i].Id < result[j].Id
+		})
+		return result
+	}
 
 	client := &http.Client{}
 	userUrl := fmt.Sprint("https://jsonplaceholder.typicode.com/todos?userId=", userId)
@@ -34,12 +47,15 @@ func GetListByUserId(userId int) []Task {
 	}
 	defer resp.Body.Close()
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
-	var result []Task
+
 	json.Unmarshal(bodyBytes, &result)
 
 	for _, task := range result {
 		store(task)
 	}
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Id < result[j].Id
+	})
 	return result
 }
 

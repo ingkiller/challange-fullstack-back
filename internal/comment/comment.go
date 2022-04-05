@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 )
 
@@ -33,6 +32,5 @@ func GetCommentsByPost(postId int) []Comment {
 }
 
 func CountCommentByPost(postId int) int {
-	log.Printf("CountCommentByPost: %v", postId)
 	return 10
 }

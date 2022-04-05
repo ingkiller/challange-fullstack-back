@@ -67,9 +67,15 @@ type Query {
   getTodoByUserId(userId: Int!):[Task!]!
 }
 
+type UserData {
+  token: String!
+  user: User!
+}
+
 type Mutation{
   toggleTask(taskId: Int!):Task!
   createTask(title: String!):Task!
   deleteTask(taskId: Int!):Boolean!
+  login(username: String!, password:String!):String!
 }
 

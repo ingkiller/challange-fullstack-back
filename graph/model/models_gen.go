@@ -61,3 +61,8 @@ type User struct {
 	Username string `json:"username"`
 	Website  string `json:"website"`
 }
+
+type UserData struct {
+	Token string `json:"token"`
+	User  *User  `json:"user"`
+}
