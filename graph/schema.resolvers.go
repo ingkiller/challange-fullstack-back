@@ -135,6 +135,7 @@ func (r *queryResolver) GetPhotosByAlbumID(ctx context.Context, albumID int) ([]
 	for _, photo := range photos {
 		result = append(result, &model.Photo{ID: photo.Id,
 			AlbumID:      photo.AlbumId,
+			Title:        photo.Title,
 			URL:          photo.Url,
 			ThumbnailURL: photo.ThumbnailUrl,
 		})
