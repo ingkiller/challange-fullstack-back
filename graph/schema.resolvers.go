@@ -6,10 +6,12 @@ package graph
 import (
 	"context"
 	"fmt"
-	"github.com/ingkiller/hackernews/internal/auth"
+	"github.com/ingkiller/hackernews/internal/album"
+	"github.com/ingkiller/hackernews/internal/photo"
 
 	"github.com/ingkiller/hackernews/graph/generated"
 	"github.com/ingkiller/hackernews/graph/model"
+	"github.com/ingkiller/hackernews/internal/auth"
 	"github.com/ingkiller/hackernews/internal/comment"
 	"github.com/ingkiller/hackernews/internal/post"
 	"github.com/ingkiller/hackernews/internal/story"
@@ -110,6 +112,32 @@ func (r *queryResolver) Albums(ctx context.Context) ([]*model.Album, error) {
 
 func (r *queryResolver) Photos(ctx context.Context) ([]*model.Photo, error) {
 	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *queryResolver) GetAlbumsByUserID(ctx context.Context, userID int) ([]*model.Album, error) {
+	var result []*model.Album
+	var albums []album.Album
+	albums = album.GetAlbumByUserId(userID)
+	for _, album := range albums {
+		result = append(result, &model.Album{ID: album.Id,
+			UserID: album.UserId,
+			Title:  album.Title})
+	}
+	return result, nil
+}
+
+func (r *queryResolver) GetPhotosByAlbumID(ctx context.Context, albumID int) ([]*model.Photo, error) {
+	var result []*model.Photo
+	var photos []photo.Photo
+	photos = photo.GetPhotosByAlbumId(albumID)
+	for _, photo := range photos {
+		result = append(result, &model.Photo{ID: photo.Id,
+			AlbumID:      photo.AlbumId,
+			URL:          photo.Url,
+			ThumbnailURL: photo.ThumbnailUrl,
+		})
+	}
+	return result, nil
 }
 
 func (r *queryResolver) GetCommentByPostID(ctx context.Context, postID int) ([]*model.Comment, error) {

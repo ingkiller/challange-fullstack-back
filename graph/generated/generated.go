@@ -44,9 +44,9 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Album struct {
-		ID    func(childComplexity int) int
-		Title func(childComplexity int) int
-		User  func(childComplexity int) int
+		ID     func(childComplexity int) int
+		Title  func(childComplexity int) int
+		UserID func(childComplexity int) int
 	}
 
 	Comment struct {
@@ -82,7 +82,9 @@ type ComplexityRoot struct {
 
 	Query struct {
 		Albums             func(childComplexity int) int
+		GetAlbumsByUserID  func(childComplexity int, userID int) int
 		GetCommentByPostID func(childComplexity int, postID int) int
+		GetPhotosByAlbumID func(childComplexity int, albumID int) int
 		GetTodoByUserID    func(childComplexity int, userID int) int
 		Photos             func(childComplexity int) int
 		Posts              func(childComplexity int) int
@@ -134,6 +136,8 @@ type QueryResolver interface {
 	Tasks(ctx context.Context) ([]*model.Task, error)
 	Albums(ctx context.Context) ([]*model.Album, error)
 	Photos(ctx context.Context) ([]*model.Photo, error)
+	GetAlbumsByUserID(ctx context.Context, userID int) ([]*model.Album, error)
+	GetPhotosByAlbumID(ctx context.Context, albumID int) ([]*model.Photo, error)
 	GetCommentByPostID(ctx context.Context, postID int) ([]*model.Comment, error)
 	GetTodoByUserID(ctx context.Context, userID int) ([]*model.Task, error)
 }
@@ -167,12 +171,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Album.Title(childComplexity), true
 
-	case "Album.user":
-		if e.complexity.Album.User == nil {
+	case "Album.userId":
+		if e.complexity.Album.UserID == nil {
 			break
 		}
 
-		return e.complexity.Album.User(childComplexity), true
+		return e.complexity.Album.UserID(childComplexity), true
 
 	case "Comment.body":
 		if e.complexity.Comment.Body == nil {
@@ -334,6 +338,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Albums(childComplexity), true
 
+	case "Query.getAlbumsByUserId":
+		if e.complexity.Query.GetAlbumsByUserID == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getAlbumsByUserId_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetAlbumsByUserID(childComplexity, args["userId"].(int)), true
+
 	case "Query.getCommentByPostId":
 		if e.complexity.Query.GetCommentByPostID == nil {
 			break
@@ -345,6 +361,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.GetCommentByPostID(childComplexity, args["postId"].(int)), true
+
+	case "Query.getPhotosByAlbumId":
+		if e.complexity.Query.GetPhotosByAlbumID == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getPhotosByAlbumId_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetPhotosByAlbumID(childComplexity, args["albumId"].(int)), true
 
 	case "Query.getTodoByUserId":
 		if e.complexity.Query.GetTodoByUserID == nil {
@@ -622,7 +650,7 @@ type Comment{
 type Album{
   id: Int!
   title: String!
-  user: User!
+  userId: Int!
 }
 
 type Photo{
@@ -648,6 +676,8 @@ type Query {
   tasks: [Task!]!
   albums:[Album!]!
   photos:[Photo!]!
+  getAlbumsByUserId(userId:Int!):[Album!]!
+  getPhotosByAlbumId(albumId:Int!):[Photo!]!
   getCommentByPostId(postId:Int!):[Comment!]!
   getTodoByUserId(userId: Int!):[Task!]!
 }
@@ -756,6 +786,21 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_getAlbumsByUserId_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["userId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["userId"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_getCommentByPostId_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -768,6 +813,21 @@ func (ec *executionContext) field_Query_getCommentByPostId_args(ctx context.Cont
 		}
 	}
 	args["postId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getPhotosByAlbumId_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["albumId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("albumId"))
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["albumId"] = arg0
 	return args, nil
 }
 
@@ -894,7 +954,7 @@ func (ec *executionContext) _Album_title(ctx context.Context, field graphql.Coll
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Album_user(ctx context.Context, field graphql.CollectedField, obj *model.Album) (ret graphql.Marshaler) {
+func (ec *executionContext) _Album_userId(ctx context.Context, field graphql.CollectedField, obj *model.Album) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -912,7 +972,7 @@ func (ec *executionContext) _Album_user(ctx context.Context, field graphql.Colle
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.User, nil
+		return obj.UserID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -924,9 +984,9 @@ func (ec *executionContext) _Album_user(ctx context.Context, field graphql.Colle
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.User)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋingkillerᚋhackernewsᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Comment_id(ctx context.Context, field graphql.CollectedField, obj *model.Comment) (ret graphql.Marshaler) {
@@ -1778,6 +1838,90 @@ func (ec *executionContext) _Query_photos(ctx context.Context, field graphql.Col
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Query().Photos(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Photo)
+	fc.Result = res
+	return ec.marshalNPhoto2ᚕᚖgithubᚗcomᚋingkillerᚋhackernewsᚋgraphᚋmodelᚐPhotoᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_getAlbumsByUserId(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_getAlbumsByUserId_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetAlbumsByUserID(rctx, args["userId"].(int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Album)
+	fc.Result = res
+	return ec.marshalNAlbum2ᚕᚖgithubᚗcomᚋingkillerᚋhackernewsᚋgraphᚋmodelᚐAlbumᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_getPhotosByAlbumId(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_getPhotosByAlbumId_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetPhotosByAlbumID(rctx, args["albumId"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3858,9 +4002,9 @@ func (ec *executionContext) _Album(ctx context.Context, sel ast.SelectionSet, ob
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "user":
+		case "userId":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Album_user(ctx, field, obj)
+				return ec._Album_userId(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)
@@ -4280,6 +4424,52 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_photos(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "getAlbumsByUserId":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getAlbumsByUserId(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "getPhotosByAlbumId":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getPhotosByAlbumId(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}

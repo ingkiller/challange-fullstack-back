@@ -37,7 +37,7 @@ type Comment{
 type Album{
   id: Int!
   title: String!
-  user: User!
+  userId: Int!
 }
 
 type Photo{
@@ -63,6 +63,8 @@ type Query {
   tasks: [Task!]!
   albums:[Album!]!
   photos:[Photo!]!
+  getAlbumsByUserId(userId:Int!):[Album!]!
+  getPhotosByAlbumId(albumId:Int!):[Photo!]!
   getCommentByPostId(postId:Int!):[Comment!]!
   getTodoByUserId(userId: Int!):[Task!]!
 }
