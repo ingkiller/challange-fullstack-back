@@ -41,8 +41,13 @@ func GetAlbumByUserId(userId int) []Album {
 		wg.Wait()
 		close(ch)
 	}()
-	for i := 0; i < len(ch); i++ {
-		result[i].NumberOfPhotos = ch[i]
+	var numberOfPhotos []int
+	for c := range ch {
+		numberOfPhotos = append(numberOfPhotos, c)
+	}
+
+	for index, _ := range result {
+		result[index].NumberOfPhotos = numberOfPhotos[index]
 	}
 
 	return result

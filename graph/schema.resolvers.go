@@ -6,13 +6,13 @@ package graph
 import (
 	"context"
 	"fmt"
-	"github.com/ingkiller/hackernews/internal/album"
-	"github.com/ingkiller/hackernews/internal/photo"
 
 	"github.com/ingkiller/hackernews/graph/generated"
 	"github.com/ingkiller/hackernews/graph/model"
+	"github.com/ingkiller/hackernews/internal/album"
 	"github.com/ingkiller/hackernews/internal/auth"
 	"github.com/ingkiller/hackernews/internal/comment"
+	"github.com/ingkiller/hackernews/internal/photo"
 	"github.com/ingkiller/hackernews/internal/post"
 	"github.com/ingkiller/hackernews/internal/story"
 	"github.com/ingkiller/hackernews/internal/todo"
@@ -120,8 +120,10 @@ func (r *queryResolver) GetAlbumsByUserID(ctx context.Context, userID int) ([]*m
 	albums = album.GetAlbumByUserId(userID)
 	for _, album := range albums {
 		result = append(result, &model.Album{ID: album.Id,
-			UserID: album.UserId,
-			Title:  album.Title})
+			UserID:         album.UserId,
+			Title:          album.Title,
+			NumberOfPhotos: album.NumberOfPhotos,
+		})
 	}
 	return result, nil
 }

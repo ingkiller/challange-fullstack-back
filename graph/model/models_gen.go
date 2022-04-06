@@ -3,9 +3,10 @@
 package model
 
 type Album struct {
-	ID     int    `json:"id"`
-	Title  string `json:"title"`
-	UserID int    `json:"userId"`
+	ID             int    `json:"id"`
+	Title          string `json:"title"`
+	UserID         int    `json:"userId"`
+	NumberOfPhotos int    `json:"numberOfPhotos"`
 }
 
 type Comment struct {

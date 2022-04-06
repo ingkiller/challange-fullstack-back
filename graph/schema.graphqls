@@ -38,6 +38,7 @@ type Album{
   id: Int!
   title: String!
   userId: Int!
+  numberOfPhotos:Int!
 }
 
 type Photo{
