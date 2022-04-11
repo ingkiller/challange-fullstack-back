@@ -31,6 +31,7 @@ type Post struct {
 	Body            string `json:"body"`
 	User            *User  `json:"user"`
 	NumberOfComment int    `json:"numberOfComment"`
+	CreatedDate     string `json:"createdDate"`
 }
 
 type PostID struct {

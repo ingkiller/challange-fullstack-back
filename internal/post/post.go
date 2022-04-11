@@ -6,8 +6,10 @@ import (
 	"github.com/ingkiller/hackernews/internal/comment"
 	"github.com/ingkiller/hackernews/internal/user"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"sync"
+	"time"
 )
 
 type Post struct {
@@ -16,8 +18,11 @@ type Post struct {
 	Body            string
 	UserId          int
 	User            user.User
+	CreatedDate     time.Time
 	NumberOfComment int
 }
+
+var PostArr []Post
 
 func GetAll() []Post {
 	client := &http.Client{}
@@ -49,8 +54,8 @@ func GetAll() []Post {
 	chComment := make(chan int)
 	go func() {
 		var wg sync.WaitGroup
-		wg.Add(3)
-		for j := 0; j < 3; j++ {
+		wg.Add(len(responseObject))
+		for j := 0; j < len(responseObject); j++ {
 			go func(p Post) {
 				defer wg.Done()
 				ch <- user.GetUserById(p.UserId)
@@ -62,8 +67,8 @@ func GetAll() []Post {
 
 	go func() {
 		var wgComment sync.WaitGroup
-		wgComment.Add(3)
-		for j := 0; j < 3; j++ {
+		wgComment.Add(len(responseObject))
+		for j := 0; j < len(responseObject); j++ {
 			go func(p Post) {
 				defer wgComment.Done()
 				chComment <- comment.CountCommentByPost(p.Id)
@@ -83,12 +88,35 @@ func GetAll() []Post {
 		numberOfComment = append(numberOfComment, c)
 	}
 
-	for i := 0; i < 3; i++ {
+	for i := 0; i < len(responseObject); i++ {
 		newPost := responseObject[i]
 		newPost.User = users[i]
 		newPost.NumberOfComment = numberOfComment[i]
+		randomTime := rand.Int63n(time.Now().Unix()-94608000) + 94608000
+		newPost.CreatedDate = time.Unix(randomTime, 0)
 		result = append(result, newPost)
 	}
+	PostArr = result
+	return result
+}
 
+func GetPostByRange(start int, long int) []Post {
+	var result []Post
+
+	fmt.Print("len(PostArr)r: %v", len(PostArr))
+	if len(PostArr) > 0 {
+		if (start + long) <= len(PostArr) {
+			result = PostArr[start:long]
+			fmt.Print("result: %v", PostArr[start:long])
+		}
+	} else {
+		var temp = GetAll()
+		fmt.Print("temp: %v", len(temp))
+		if len(temp) > 0 {
+			if (start + long) <= len(temp) {
+				result = PostArr[start:long]
+			}
+		}
+	}
 	return result
 }

@@ -182,6 +182,23 @@ func (r *queryResolver) GetTodoByUserID(ctx context.Context, userID int) ([]*mod
 	return result, nil
 }
 
+func (r *queryResolver) GetPostByRange(ctx context.Context, start int, long int) ([]*model.Post, error) {
+	var result []*model.Post
+	var posts []post.Post
+	posts = post.GetPostByRange(start, long)
+	for _, post := range posts {
+		fmt.Print("post.CreatedDatev%:", post.CreatedDate)
+		result = append(result, &model.Post{ID: post.Id,
+			Title:           post.Title,
+			Body:            post.Body,
+			NumberOfComment: post.NumberOfComment,
+			CreatedDate:     post.CreatedDate.String(),
+			User:            &model.User{Name: post.User.Name, Username: post.User.Username, Website: post.User.Website},
+		})
+	}
+	return result, nil
+}
+
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 

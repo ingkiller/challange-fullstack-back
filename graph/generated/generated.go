@@ -75,6 +75,7 @@ type ComplexityRoot struct {
 
 	Post struct {
 		Body            func(childComplexity int) int
+		CreatedDate     func(childComplexity int) int
 		ID              func(childComplexity int) int
 		NumberOfComment func(childComplexity int) int
 		Title           func(childComplexity int) int
@@ -86,6 +87,7 @@ type ComplexityRoot struct {
 		GetAlbumsByUserID  func(childComplexity int, userID int) int
 		GetCommentByPostID func(childComplexity int, postID int) int
 		GetPhotosByAlbumID func(childComplexity int, albumID int) int
+		GetPostByRange     func(childComplexity int, start int, long int) int
 		GetTodoByUserID    func(childComplexity int, userID int) int
 		Photos             func(childComplexity int) int
 		Posts              func(childComplexity int) int
@@ -141,6 +143,7 @@ type QueryResolver interface {
 	GetPhotosByAlbumID(ctx context.Context, albumID int) ([]*model.Photo, error)
 	GetCommentByPostID(ctx context.Context, postID int) ([]*model.Comment, error)
 	GetTodoByUserID(ctx context.Context, userID int) ([]*model.Task, error)
+	GetPostByRange(ctx context.Context, start int, long int) ([]*model.Post, error)
 }
 
 type executableSchema struct {
@@ -311,6 +314,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Post.Body(childComplexity), true
 
+	case "Post.createdDate":
+		if e.complexity.Post.CreatedDate == nil {
+			break
+		}
+
+		return e.complexity.Post.CreatedDate(childComplexity), true
+
 	case "Post.id":
 		if e.complexity.Post.ID == nil {
 			break
@@ -381,6 +391,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.GetPhotosByAlbumID(childComplexity, args["albumId"].(int)), true
+
+	case "Query.getPostByRange":
+		if e.complexity.Query.GetPostByRange == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getPostByRange_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetPostByRange(childComplexity, args["start"].(int), args["long"].(int)), true
 
 	case "Query.getTodoByUserId":
 		if e.complexity.Query.GetTodoByUserID == nil {
@@ -645,6 +667,7 @@ type Post {
   body: String!
   user: User!
   numberOfComment: Int!
+  createdDate: String!
 }
 
 type Comment{
@@ -689,6 +712,7 @@ type Query {
   getPhotosByAlbumId(albumId:Int!):[Photo!]!
   getCommentByPostId(postId:Int!):[Comment!]!
   getTodoByUserId(userId: Int!):[Task!]!
+  getPostByRange(start:Int!, long:Int!):[Post!]!
 }
 
 type UserData {
@@ -837,6 +861,30 @@ func (ec *executionContext) field_Query_getPhotosByAlbumId_args(ctx context.Cont
 		}
 	}
 	args["albumId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getPostByRange_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["start"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("start"))
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["start"] = arg0
+	var arg1 int
+	if tmp, ok := rawArgs["long"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("long"))
+		arg1, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["long"] = arg1
 	return args, nil
 }
 
@@ -1726,6 +1774,41 @@ func (ec *executionContext) _Post_numberOfComment(ctx context.Context, field gra
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Post_createdDate(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Post",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedDate, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query_stories(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -2064,6 +2147,48 @@ func (ec *executionContext) _Query_getTodoByUserId(ctx context.Context, field gr
 	res := resTmp.([]*model.Task)
 	fc.Result = res
 	return ec.marshalNTask2ᚕᚖgithubᚗcomᚋingkillerᚋhackernewsᚋgraphᚋmodelᚐTaskᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_getPostByRange(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_getPostByRange_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetPostByRange(rctx, args["start"].(int), args["long"].(int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Post)
+	fc.Result = res
+	return ec.marshalNPost2ᚕᚖgithubᚗcomᚋingkillerᚋhackernewsᚋgraphᚋmodelᚐPostᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -4349,6 +4474,16 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "createdDate":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Post_createdDate(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -4570,6 +4705,29 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_getTodoByUserId(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "getPostByRange":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getPostByRange(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -5524,6 +5682,50 @@ func (ec *executionContext) marshalNPhoto2ᚖgithubᚗcomᚋingkillerᚋhackerne
 		return graphql.Null
 	}
 	return ec._Photo(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNPost2ᚕᚖgithubᚗcomᚋingkillerᚋhackernewsᚋgraphᚋmodelᚐPostᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Post) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNPost2ᚖgithubᚗcomᚋingkillerᚋhackernewsᚋgraphᚋmodelᚐPost(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalNPost2ᚖgithubᚗcomᚋingkillerᚋhackernewsᚋgraphᚋmodelᚐPost(ctx context.Context, sel ast.SelectionSet, v *model.Post) graphql.Marshaler {

@@ -24,6 +24,7 @@ type Post {
   body: String!
   user: User!
   numberOfComment: Int!
+  createdDate: String!
 }
 
 type Comment{
@@ -68,6 +69,7 @@ type Query {
   getPhotosByAlbumId(albumId:Int!):[Photo!]!
   getCommentByPostId(postId:Int!):[Comment!]!
   getTodoByUserId(userId: Int!):[Task!]!
+  getPostByRange(start:Int!, long:Int!):[Post!]!
 }
 
 type UserData {
