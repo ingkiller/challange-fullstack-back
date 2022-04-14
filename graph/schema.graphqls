@@ -1,16 +1,4 @@
 
-type Story {
-  id: Int!
-  title: String!
-  by: String!
-  descendants : Int!
-  kids : [Int!]!
-  score : Int!
-  time : Int!
-  type  : String!
-  url : String!
-}
-
 type Address {
   street: String!
   suite: String!
@@ -71,7 +59,6 @@ input PostId{
   postId:Int!
 }
 type Query {
-  stories: [Story!]!
   posts:[Post!]
   tasks: [Task!]!
   albums:[Album!]!
@@ -92,8 +79,8 @@ type UserData {
 
 type Mutation{
   toggleTask(taskId: Int!):Task!
-  createTask(title: String!):Task!
-  deleteTask(taskId: Int!):Boolean!
+  createTask(title: String!,userId: Int!):Task!
+  deleteTask(taskId: Int!,userId:Int!):Boolean!
   login(username: String!, password:String!):String!
 }
 

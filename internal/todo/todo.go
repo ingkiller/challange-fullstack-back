@@ -3,8 +3,8 @@ package todo
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/ingkiller/hackernews/internal/client"
 	"io/ioutil"
-	"net/http"
 	"sort"
 )
 
@@ -15,20 +15,18 @@ type Task struct {
 	Completed bool
 }
 
-var TasksById = make(map[int]*Task)
+var TaskByUserId = make(map[int]map[int]*Task)
 var nextTask = 1
 
-func store(task Task) {
-	TasksById[task.Id] = &task
+func store(task Task, userId int) {
+	TaskByUserId[userId][task.Id] = &task
 	nextTask++
 }
 
 func GetListByUserId(userId int) []Task {
 	var result []Task
-	fmt.Print("len TasksById : %v", len(TasksById))
-	if len(TasksById) > 0 {
-
-		for _, t := range TasksById {
+	if len(TaskByUserId[userId]) > 0 {
+		for _, t := range TaskByUserId[userId] {
 			result = append(result, *t)
 		}
 		sort.Slice(result, func(i, j int) bool {
@@ -37,11 +35,9 @@ func GetListByUserId(userId int) []Task {
 		return result
 	}
 
-	client := &http.Client{}
 	userUrl := fmt.Sprint("https://jsonplaceholder.typicode.com/todos?userId=", userId)
-	req, err := http.NewRequest(http.MethodGet, userUrl, nil)
-	req.Header.Add("Accept", "application/json")
-	resp, err := client.Do(req)
+
+	resp, err := client.MakeReq(userUrl)
 	if err != nil {
 		fmt.Print("NewRequest: %v", err.Error())
 	}
@@ -51,7 +47,7 @@ func GetListByUserId(userId int) []Task {
 	json.Unmarshal(bodyBytes, &result)
 
 	for _, task := range result {
-		store(task)
+		store(task, userId)
 	}
 	sort.Slice(result, func(i, j int) bool {
 		return result[i].Id < result[j].Id
@@ -59,25 +55,25 @@ func GetListByUserId(userId int) []Task {
 	return result
 }
 
-func ToggleTask(taskId int) Task {
-	task := TasksById[taskId]
+func ToggleTask(taskId int, userId int) Task {
+	task := TaskByUserId[userId][taskId]
 	task.Completed = !task.Completed
-	TasksById[taskId] = task
+	TaskByUserId[userId][taskId] = task
 	return *task
 }
 
-func CreateTask(title string) Task {
+func CreateTask(title string, userId int) Task {
 	newTask := Task{
 		Id:        nextTask,
-		UserId:    1,
+		UserId:    userId,
 		Title:     title,
 		Completed: false,
 	}
 	nextTask++
-	store(newTask)
+	store(newTask, userId)
 	return newTask
 }
 
-func DeleteTask(taskId int) {
-	delete(TasksById, taskId)
+func DeleteTask(taskId int, userId int) {
+	delete(TaskByUserId[userId], taskId)
 }

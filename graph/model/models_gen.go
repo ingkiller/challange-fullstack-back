@@ -45,18 +45,6 @@ type PostID struct {
 	PostID int `json:"postId"`
 }
 
-type Story struct {
-	ID          int    `json:"id"`
-	Title       string `json:"title"`
-	By          string `json:"by"`
-	Descendants int    `json:"descendants"`
-	Kids        []int  `json:"kids"`
-	Score       int    `json:"score"`
-	Time        int    `json:"time"`
-	Type        string `json:"type"`
-	URL         string `json:"url"`
-}
-
 type Task struct {
 	ID        int    `json:"id"`
 	UserID    int    `json:"userId"`

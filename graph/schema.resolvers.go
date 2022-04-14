@@ -14,7 +14,6 @@ import (
 	"github.com/ingkiller/hackernews/internal/comment"
 	"github.com/ingkiller/hackernews/internal/photo"
 	"github.com/ingkiller/hackernews/internal/post"
-	"github.com/ingkiller/hackernews/internal/story"
 	"github.com/ingkiller/hackernews/internal/todo"
 	"github.com/ingkiller/hackernews/internal/user"
 	"github.com/ingkiller/hackernews/pkg/jwt"
@@ -64,26 +63,6 @@ func (r *mutationResolver) Login(ctx context.Context, username string, password 
 	}
 
 	return token, nil
-}
-
-func (r *queryResolver) Stories(ctx context.Context) ([]*model.Story, error) {
-	var resultLinks []*model.Story
-	var dbLinks []story.Story
-	dbLinks = story.GetAll()
-
-	for _, story := range dbLinks {
-		resultLinks = append(resultLinks, &model.Story{ID: story.Id,
-			Title:       story.Title,
-			By:          story.By,
-			Descendants: story.Descendants,
-			Kids:        story.Kids,
-			Score:       story.Score,
-			Time:        story.Time,
-			Type:        story.Type,
-			URL:         story.URL,
-		})
-	}
-	return resultLinks, nil
 }
 
 func (r *queryResolver) Posts(ctx context.Context) ([]*model.Post, error) {
