@@ -5,6 +5,7 @@ package graph
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/ingkiller/hackernews/graph/generated"
@@ -19,8 +20,8 @@ import (
 	"github.com/ingkiller/hackernews/pkg/jwt"
 )
 
-func (r *mutationResolver) ToggleTask(ctx context.Context, taskID int) (*model.Task, error) {
-	var task = todo.ToggleTask(taskID)
+func (r *mutationResolver) ToggleTask(ctx context.Context, taskID int, userID int) (*model.Task, error) {
+	var task = todo.ToggleTask(taskID, userID)
 	var result = &model.Task{
 		ID:        task.Id,
 		UserID:    task.UserId,
@@ -30,8 +31,8 @@ func (r *mutationResolver) ToggleTask(ctx context.Context, taskID int) (*model.T
 	return result, nil
 }
 
-func (r *mutationResolver) CreateTask(ctx context.Context, title string) (*model.Task, error) {
-	var newList = todo.CreateTask(title)
+func (r *mutationResolver) CreateTask(ctx context.Context, title string, userID int) (*model.Task, error) {
+	var newList = todo.CreateTask(title, userID)
 	var result = &model.Task{
 		ID:        newList.Id,
 		UserID:    newList.UserId,
@@ -42,8 +43,8 @@ func (r *mutationResolver) CreateTask(ctx context.Context, title string) (*model
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) DeleteTask(ctx context.Context, taskID int) (bool, error) {
-	todo.DeleteTask(taskID)
+func (r *mutationResolver) DeleteTask(ctx context.Context, taskID int, userID int) (bool, error) {
+	todo.DeleteTask(taskID, userID)
 	return true, nil
 }
 
@@ -54,8 +55,7 @@ func (r *mutationResolver) Login(ctx context.Context, username string, password 
 
 	correct := user.Authenticate()
 	if !correct {
-		// 1
-		return "", nil
+		return "", errors.New("user or pass incorrect")
 	}
 	token, err := jwt.GenerateToken(user.Username)
 	if err != nil {

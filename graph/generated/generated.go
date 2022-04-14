@@ -66,10 +66,10 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CreateTask func(childComplexity int, title string) int
-		DeleteTask func(childComplexity int, taskID int) int
+		CreateTask func(childComplexity int, title string, userID int) int
+		DeleteTask func(childComplexity int, taskID int, userID int) int
 		Login      func(childComplexity int, username string, password string) int
-		ToggleTask func(childComplexity int, taskID int) int
+		ToggleTask func(childComplexity int, taskID int, userID int) int
 	}
 
 	Photo struct {
@@ -128,9 +128,9 @@ type ComplexityRoot struct {
 }
 
 type MutationResolver interface {
-	ToggleTask(ctx context.Context, taskID int) (*model.Task, error)
-	CreateTask(ctx context.Context, title string) (*model.Task, error)
-	DeleteTask(ctx context.Context, taskID int) (bool, error)
+	ToggleTask(ctx context.Context, taskID int, userID int) (*model.Task, error)
+	CreateTask(ctx context.Context, title string, userID int) (*model.Task, error)
+	DeleteTask(ctx context.Context, taskID int, userID int) (bool, error)
 	Login(ctx context.Context, username string, password string) (string, error)
 }
 type QueryResolver interface {
@@ -263,7 +263,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateTask(childComplexity, args["title"].(string)), true
+		return e.complexity.Mutation.CreateTask(childComplexity, args["title"].(string), args["userId"].(int)), true
 
 	case "Mutation.deleteTask":
 		if e.complexity.Mutation.DeleteTask == nil {
@@ -275,7 +275,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteTask(childComplexity, args["taskId"].(int)), true
+		return e.complexity.Mutation.DeleteTask(childComplexity, args["taskId"].(int), args["userId"].(int)), true
 
 	case "Mutation.login":
 		if e.complexity.Mutation.Login == nil {
@@ -299,7 +299,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.ToggleTask(childComplexity, args["taskId"].(int)), true
+		return e.complexity.Mutation.ToggleTask(childComplexity, args["taskId"].(int), args["userId"].(int)), true
 
 	case "Photo.albumId":
 		if e.complexity.Photo.AlbumID == nil {
@@ -727,9 +727,9 @@ type UserData {
 }
 
 type Mutation{
-  toggleTask(taskId: Int!):Task!
-  createTask(title: String!):Task!
-  deleteTask(taskId: Int!):Boolean!
+  toggleTask(taskId: Int!,userId: Int!):Task!
+  createTask(title: String!,userId: Int!):Task!
+  deleteTask(taskId: Int!,userId:Int!):Boolean!
   login(username: String!, password:String!):String!
 }
 
@@ -753,6 +753,15 @@ func (ec *executionContext) field_Mutation_createTask_args(ctx context.Context, 
 		}
 	}
 	args["title"] = arg0
+	var arg1 int
+	if tmp, ok := rawArgs["userId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
+		arg1, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["userId"] = arg1
 	return args, nil
 }
 
@@ -768,6 +777,15 @@ func (ec *executionContext) field_Mutation_deleteTask_args(ctx context.Context, 
 		}
 	}
 	args["taskId"] = arg0
+	var arg1 int
+	if tmp, ok := rawArgs["userId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
+		arg1, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["userId"] = arg1
 	return args, nil
 }
 
@@ -807,6 +825,15 @@ func (ec *executionContext) field_Mutation_toggleTask_args(ctx context.Context, 
 		}
 	}
 	args["taskId"] = arg0
+	var arg1 int
+	if tmp, ok := rawArgs["userId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
+		arg1, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["userId"] = arg1
 	return args, nil
 }
 
@@ -1460,7 +1487,7 @@ func (ec *executionContext) _Mutation_toggleTask(ctx context.Context, field grap
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().ToggleTask(rctx, args["taskId"].(int))
+		return ec.resolvers.Mutation().ToggleTask(rctx, args["taskId"].(int), args["userId"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1502,7 +1529,7 @@ func (ec *executionContext) _Mutation_createTask(ctx context.Context, field grap
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateTask(rctx, args["title"].(string))
+		return ec.resolvers.Mutation().CreateTask(rctx, args["title"].(string), args["userId"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1544,7 +1571,7 @@ func (ec *executionContext) _Mutation_deleteTask(ctx context.Context, field grap
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteTask(rctx, args["taskId"].(int))
+		return ec.resolvers.Mutation().DeleteTask(rctx, args["taskId"].(int), args["userId"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)

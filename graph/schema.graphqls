@@ -78,7 +78,7 @@ type UserData {
 }
 
 type Mutation{
-  toggleTask(taskId: Int!):Task!
+  toggleTask(taskId: Int!,userId: Int!):Task!
   createTask(title: String!,userId: Int!):Task!
   deleteTask(taskId: Int!,userId:Int!):Boolean!
   login(username: String!, password:String!):String!
