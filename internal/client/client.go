@@ -9,5 +9,6 @@ func MakeReq(url string) (*http.Response, error) {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	req.Header.Add("Accept", "application/json")
 	resp, err := client.Do(req)
+
 	return resp, err
 }

@@ -2,6 +2,13 @@
 
 package model
 
+type Address struct {
+	Street  string `json:"street"`
+	Suite   string `json:"suite"`
+	City    string `json:"city"`
+	Zipcode string `json:"zipcode"`
+}
+
 type Album struct {
 	ID             int    `json:"id"`
 	Title          string `json:"title"`
@@ -58,10 +65,14 @@ type Task struct {
 }
 
 type User struct {
-	ID       *int   `json:"id"`
-	Name     string `json:"name"`
-	Username string `json:"username"`
-	Website  string `json:"website"`
+	ID       *int     `json:"id"`
+	Name     string   `json:"name"`
+	Username string   `json:"username"`
+	Website  string   `json:"website"`
+	Email    string   `json:"email"`
+	Address  *Address `json:"address"`
+	Phone    string   `json:"phone"`
+	Company  string   `json:"company"`
 }
 
 type UserData struct {

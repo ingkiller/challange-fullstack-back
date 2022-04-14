@@ -3,6 +3,8 @@ package user
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/ingkiller/hackernews/graph/model"
+	"github.com/ingkiller/hackernews/internal/client"
 	"golang.org/x/crypto/bcrypt"
 	"io/ioutil"
 	"net/http"
@@ -15,6 +17,28 @@ type User struct {
 	Password string
 	Website  string
 	Email    string
+}
+
+func GetAll() []*model.User {
+	resp, err := client.MakeReq("https://jsonplaceholder.typicode.com/users")
+	defer resp.Body.Close()
+	if err != nil {
+		fmt.Print("NewRequest: %v", err.Error())
+	}
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	var resObject []User
+	json.Unmarshal(bodyBytes, &resObject)
+	var result []*model.User
+	for index, user := range resObject {
+		result = append(result, &model.User{
+			ID:       &resObject[index].Id,
+			Name:     user.Name,
+			Username: user.Username,
+			Website:  user.Website,
+			Email:    user.Email,
+		})
+	}
+	return result
 }
 
 func (u User) GetUserIdByUsername(username string) (int, error) {

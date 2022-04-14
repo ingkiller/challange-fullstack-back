@@ -114,6 +114,10 @@ func (r *queryResolver) Photos(ctx context.Context) ([]*model.Photo, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
+func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
+	return user.GetAll(), nil
+}
+
 func (r *queryResolver) GetAlbumsByUserID(ctx context.Context, userID int) ([]*model.Album, error) {
 	var result []*model.Album
 	var albums []album.Album
@@ -197,6 +201,10 @@ func (r *queryResolver) GetPostByRange(ctx context.Context, start int, long int)
 		})
 	}
 	return result, nil
+}
+
+func (r *queryResolver) GetPostsByUserID(ctx context.Context, userID int, start int, long int) ([]*model.Post, error) {
+	return post.GetPostsByUserId(userID, start, long), nil
 }
 
 // Mutation returns generated.MutationResolver implementation.

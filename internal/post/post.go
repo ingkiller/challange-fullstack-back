@@ -3,6 +3,8 @@ package post
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/ingkiller/hackernews/graph/model"
+	"github.com/ingkiller/hackernews/internal/client"
 	"github.com/ingkiller/hackernews/internal/comment"
 	"github.com/ingkiller/hackernews/internal/user"
 	"io/ioutil"
@@ -23,6 +25,57 @@ type Post struct {
 }
 
 var PostArr []Post
+
+func addInfoToPost(responseObject []Post) []Post {
+	var result []Post
+	ch := make(chan user.User)
+	chComment := make(chan int)
+	go func() {
+		var wg sync.WaitGroup
+		wg.Add(len(responseObject))
+		for j := 0; j < len(responseObject); j++ {
+			go func(p Post) {
+				defer wg.Done()
+				ch <- user.GetUserById(p.UserId)
+			}(responseObject[j])
+		}
+		wg.Wait()
+		close(ch)
+	}()
+
+	go func() {
+		var wgComment sync.WaitGroup
+		wgComment.Add(len(responseObject))
+		for j := 0; j < len(responseObject); j++ {
+			go func(p Post) {
+				defer wgComment.Done()
+				chComment <- comment.CountCommentByPost(p.Id)
+			}(responseObject[j])
+		}
+		wgComment.Wait()
+		close(chComment)
+	}()
+
+	var users []user.User
+	for c := range ch {
+		users = append(users, c)
+	}
+
+	var numberOfComment []int
+	for c := range chComment {
+		numberOfComment = append(numberOfComment, c)
+	}
+	for i := 0; i < len(responseObject); i++ {
+		newPost := responseObject[i]
+		newPost.User = users[i]
+		newPost.NumberOfComment = numberOfComment[i]
+		randomTime := time.Now().Unix() - rand.Int63n(4406400)
+		newPost.CreatedDate = time.Unix(randomTime, 0)
+		result = append(result, newPost)
+	}
+	PostArr = result
+	return result
+}
 
 func GetAll() []Post {
 	client := &http.Client{}
@@ -87,7 +140,6 @@ func GetAll() []Post {
 	for c := range chComment {
 		numberOfComment = append(numberOfComment, c)
 	}
-
 	for i := 0; i < len(responseObject); i++ {
 		newPost := responseObject[i]
 		newPost.User = users[i]
@@ -119,4 +171,32 @@ func GetPostByRange(start int, long int) []Post {
 		}
 	}
 	return result
+}
+
+func GetPostsByUserId(userId int, start int, long int) []*model.Post {
+	postUrl := fmt.Sprint("https://jsonplaceholder.typicode.com/posts?userId=", userId)
+	if userId == 0 {
+		postUrl = fmt.Sprint("https://jsonplaceholder.typicode.com/posts")
+	}
+	resp, err := client.MakeReq(postUrl)
+	defer resp.Body.Close()
+	if err != nil {
+		fmt.Print("Error: %v", err.Error())
+	}
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	var resObject []Post
+	json.Unmarshal(bodyBytes, &resObject)
+	resObject = addInfoToPost(resObject)
+	var result []*model.Post
+	for _, post := range resObject {
+		result = append(result, &model.Post{
+			ID:              post.Id,
+			Title:           post.Title,
+			Body:            post.Body,
+			NumberOfComment: post.NumberOfComment,
+			CreatedDate:     post.CreatedDate.String(),
+			User:            &model.User{Name: post.User.Name, Username: post.User.Username, Website: post.User.Website, Email: post.User.Email},
+		})
+	}
+	return result[start:long]
 }

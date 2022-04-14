@@ -11,11 +11,22 @@ type Story {
   url : String!
 }
 
+type Address {
+  street: String!
+  suite: String!
+  city: String!
+  zipcode: String!
+}
+
 type User {
   id: Int
   name: String!
   username: String!
   website: String!
+  email: String!
+  address: Address!
+  phone: String!
+  company: String!
 }
 
 type Post {
@@ -65,11 +76,13 @@ type Query {
   tasks: [Task!]!
   albums:[Album!]!
   photos:[Photo!]!
+  users:[User!]!
   getAlbumsByUserId(userId:Int!):[Album!]!
   getPhotosByAlbumId(albumId:Int!):[Photo!]!
   getCommentByPostId(postId:Int!):[Comment!]!
   getTodoByUserId(userId: Int!):[Task!]!
   getPostByRange(start:Int!, long:Int!):[Post!]!
+  getPostsByUserId(userId: Int!,start:Int!, long:Int!):[Post!]!
 }
 
 type UserData {
