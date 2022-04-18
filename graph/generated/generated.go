@@ -131,7 +131,7 @@ type MutationResolver interface {
 	ToggleTask(ctx context.Context, taskID int, userID int) (*model.Task, error)
 	CreateTask(ctx context.Context, title string, userID int) (*model.Task, error)
 	DeleteTask(ctx context.Context, taskID int, userID int) (bool, error)
-	Login(ctx context.Context, username string, password string) (string, error)
+	Login(ctx context.Context, username string, password string) (*model.UserData, error)
 }
 type QueryResolver interface {
 	Posts(ctx context.Context) ([]*model.Post, error)
@@ -730,7 +730,7 @@ type Mutation{
   toggleTask(taskId: Int!,userId: Int!):Task!
   createTask(title: String!,userId: Int!):Task!
   deleteTask(taskId: Int!,userId:Int!):Boolean!
-  login(username: String!, password:String!):String!
+  login(username: String!, password:String!):UserData!
 }
 
 `, BuiltIn: false},
@@ -1625,9 +1625,9 @@ func (ec *executionContext) _Mutation_login(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*model.UserData)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNUserData2ᚖgithubᚗcomᚋingkillerᚋhackernewsᚋgraphᚋmodelᚐUserData(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Photo_id(ctx context.Context, field graphql.CollectedField, obj *model.Photo) (ret graphql.Marshaler) {
@@ -5927,6 +5927,20 @@ func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋingkillerᚋhackernew
 		return graphql.Null
 	}
 	return ec._User(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNUserData2githubᚗcomᚋingkillerᚋhackernewsᚋgraphᚋmodelᚐUserData(ctx context.Context, sel ast.SelectionSet, v model.UserData) graphql.Marshaler {
+	return ec._UserData(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUserData2ᚖgithubᚗcomᚋingkillerᚋhackernewsᚋgraphᚋmodelᚐUserData(ctx context.Context, sel ast.SelectionSet, v *model.UserData) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._UserData(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {

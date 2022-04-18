@@ -19,12 +19,16 @@ var TaskByUserId = make(map[int]map[int]*Task)
 var nextTask = 1
 
 func store(task Task, userId int) {
+	if TaskByUserId[userId] == nil {
+		TaskByUserId[userId] = make(map[int]*Task)
+	}
 	TaskByUserId[userId][task.Id] = &task
 	nextTask++
 }
 
 func GetListByUserId(userId int) []Task {
 	var result []Task
+
 	if len(TaskByUserId[userId]) > 0 {
 		for _, t := range TaskByUserId[userId] {
 			result = append(result, *t)
@@ -49,6 +53,7 @@ func GetListByUserId(userId int) []Task {
 	for _, task := range result {
 		store(task, userId)
 	}
+
 	sort.Slice(result, func(i, j int) bool {
 		return result[i].Id < result[j].Id
 	})

@@ -2,9 +2,11 @@ package user
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/ingkiller/hackernews/graph/model"
 	"github.com/ingkiller/hackernews/internal/client"
+	"github.com/ingkiller/hackernews/pkg/jwt"
 	"golang.org/x/crypto/bcrypt"
 	"io/ioutil"
 	"net/http"
@@ -17,6 +19,11 @@ type User struct {
 	Password string
 	Website  string
 	Email    string
+}
+
+type DataUser struct {
+	User  User
+	Token string
 }
 
 func GetAll() []*model.User {
@@ -61,8 +68,29 @@ func GetUserById(id int) User {
 	return resObject
 }
 
-func (user *User) Authenticate() bool {
-	return user.Username == user.Password
+func (user *User) Authenticate() (DataUser, error) {
+
+	if user.Username == user.Password {
+		userUrl := fmt.Sprint("https://jsonplaceholder.typicode.com/users?username=", user.Username)
+		resp, err := client.MakeReq(userUrl)
+		if err != nil {
+			fmt.Print("NewRequest: %v", err.Error())
+		}
+		defer resp.Body.Close()
+		bodyBytes, err := ioutil.ReadAll(resp.Body)
+
+		var userResult []User
+		json.Unmarshal(bodyBytes, &userResult)
+		if len(userResult) > 0 {
+			token, err := jwt.GenerateToken(user.Username)
+			if err != nil {
+				return DataUser{}, errors.New("no username")
+			}
+			return DataUser{Token: token, User: userResult[0]}, nil
+		}
+	}
+
+	return DataUser{}, errors.New("no username")
 }
 func GetUserIdByUsername(username string) (int, error) {
 	/*

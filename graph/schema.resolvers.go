@@ -17,7 +17,6 @@ import (
 	"github.com/ingkiller/hackernews/internal/post"
 	"github.com/ingkiller/hackernews/internal/todo"
 	"github.com/ingkiller/hackernews/internal/user"
-	"github.com/ingkiller/hackernews/pkg/jwt"
 )
 
 func (r *mutationResolver) ToggleTask(ctx context.Context, taskID int, userID int) (*model.Task, error) {
@@ -48,21 +47,22 @@ func (r *mutationResolver) DeleteTask(ctx context.Context, taskID int, userID in
 	return true, nil
 }
 
-func (r *mutationResolver) Login(ctx context.Context, username string, password string) (string, error) {
+func (r *mutationResolver) Login(ctx context.Context, username string, password string) (*model.UserData, error) {
 	var user user.User
 	user.Username = username
 	user.Password = password
 
-	correct := user.Authenticate()
-	if !correct {
-		return "", errors.New("user or pass incorrect")
-	}
-	token, err := jwt.GenerateToken(user.Username)
+	result, err := user.Authenticate()
 	if err != nil {
-		return "", err
+		return nil, errors.New("user or pass incorrect")
 	}
 
-	return token, nil
+	return &model.UserData{Token: result.Token,
+		User: &model.User{
+			ID:       &result.User.Id,
+			Username: username,
+			Name:     result.User.Name,
+		}}, nil
 }
 
 func (r *queryResolver) Posts(ctx context.Context) ([]*model.Post, error) {
