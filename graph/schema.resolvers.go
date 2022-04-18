@@ -186,6 +186,18 @@ func (r *queryResolver) GetPostsByUserID(ctx context.Context, userID int, start 
 	return post.GetPostsByUserId(userID, start, long), nil
 }
 
+func (r *queryResolver) GetUserDataByUsername(ctx context.Context, tokenStr string) (*model.User, error) {
+	result, err := user.GetUserDataByUsername(tokenStr)
+	if err != nil {
+		return &model.User{}, err
+	}
+
+	return &model.User{ID: &result.Id,
+		Username: result.Username,
+		Name:     result.Name,
+	}, nil
+}
+
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 

@@ -90,17 +90,18 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Albums             func(childComplexity int) int
-		GetAlbumsByUserID  func(childComplexity int, userID int) int
-		GetCommentByPostID func(childComplexity int, postID int) int
-		GetPhotosByAlbumID func(childComplexity int, albumID int) int
-		GetPostByRange     func(childComplexity int, start int, long int) int
-		GetPostsByUserID   func(childComplexity int, userID int, start int, long int) int
-		GetTodoByUserID    func(childComplexity int, userID int) int
-		Photos             func(childComplexity int) int
-		Posts              func(childComplexity int) int
-		Tasks              func(childComplexity int) int
-		Users              func(childComplexity int) int
+		Albums                func(childComplexity int) int
+		GetAlbumsByUserID     func(childComplexity int, userID int) int
+		GetCommentByPostID    func(childComplexity int, postID int) int
+		GetPhotosByAlbumID    func(childComplexity int, albumID int) int
+		GetPostByRange        func(childComplexity int, start int, long int) int
+		GetPostsByUserID      func(childComplexity int, userID int, start int, long int) int
+		GetTodoByUserID       func(childComplexity int, userID int) int
+		GetUserDataByUsername func(childComplexity int, tokenStr string) int
+		Photos                func(childComplexity int) int
+		Posts                 func(childComplexity int) int
+		Tasks                 func(childComplexity int) int
+		Users                 func(childComplexity int) int
 	}
 
 	Task struct {
@@ -145,6 +146,7 @@ type QueryResolver interface {
 	GetTodoByUserID(ctx context.Context, userID int) ([]*model.Task, error)
 	GetPostByRange(ctx context.Context, start int, long int) ([]*model.Post, error)
 	GetPostsByUserID(ctx context.Context, userID int, start int, long int) ([]*model.Post, error)
+	GetUserDataByUsername(ctx context.Context, tokenStr string) (*model.User, error)
 }
 
 type executableSchema struct {
@@ -457,6 +459,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.GetTodoByUserID(childComplexity, args["userId"].(int)), true
 
+	case "Query.getUserDataByUsername":
+		if e.complexity.Query.GetUserDataByUsername == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getUserDataByUsername_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetUserDataByUsername(childComplexity, args["tokenStr"].(string)), true
+
 	case "Query.photos":
 		if e.complexity.Query.Photos == nil {
 			break
@@ -719,6 +733,7 @@ type Query {
   getTodoByUserId(userId: Int!):[Task!]!
   getPostByRange(start:Int!, long:Int!):[Post!]!
   getPostsByUserId(userId: Int!,start:Int!, long:Int!):[Post!]!
+  getUserDataByUsername(tokenStr:String!):User!
 }
 
 type UserData {
@@ -966,6 +981,21 @@ func (ec *executionContext) field_Query_getTodoByUserId_args(ctx context.Context
 		}
 	}
 	args["userId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getUserDataByUsername_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["tokenStr"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tokenStr"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["tokenStr"] = arg0
 	return args, nil
 }
 
@@ -2437,6 +2467,48 @@ func (ec *executionContext) _Query_getPostsByUserId(ctx context.Context, field g
 	res := resTmp.([]*model.Post)
 	fc.Result = res
 	return ec.marshalNPost2ᚕᚖgithubᚗcomᚋingkillerᚋhackernewsᚋgraphᚋmodelᚐPostᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_getUserDataByUsername(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_getUserDataByUsername_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetUserDataByUsername(rctx, args["tokenStr"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.User)
+	fc.Result = res
+	return ec.marshalNUser2ᚖgithubᚗcomᚋingkillerᚋhackernewsᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -4898,6 +4970,29 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
+		case "getUserDataByUsername":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getUserDataByUsername(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
 		case "__type":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___type(ctx, field)
@@ -5873,6 +5968,10 @@ func (ec *executionContext) marshalNTask2ᚖgithubᚗcomᚋingkillerᚋhackernew
 		return graphql.Null
 	}
 	return ec._Task(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNUser2githubᚗcomᚋingkillerᚋhackernewsᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
+	return ec._User(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋingkillerᚋhackernewsᚋgraphᚋmodelᚐUserᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.User) graphql.Marshaler {

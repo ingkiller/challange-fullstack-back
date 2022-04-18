@@ -70,6 +70,7 @@ type Query {
   getTodoByUserId(userId: Int!):[Task!]!
   getPostByRange(start:Int!, long:Int!):[Post!]!
   getPostsByUserId(userId: Int!,start:Int!, long:Int!):[Post!]!
+  getUserDataByUsername(tokenStr:String!):User!
 }
 
 type UserData {

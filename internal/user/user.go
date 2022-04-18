@@ -131,3 +131,30 @@ type WrongUsernameOrPasswordError struct{}
 func (m *WrongUsernameOrPasswordError) Error() string {
 	return "wrong username or password"
 }
+
+func GetUserDataByUsername(tokenStr string) (User, error) {
+	username, err := jwt.ParseToken(tokenStr)
+	if err != nil {
+		return User{}, err
+	}
+	userUrl := fmt.Sprint("https://jsonplaceholder.typicode.com/users?username=", username)
+	fmt.Print("userUrl: %v", userUrl)
+	resp, err := client.MakeReq(userUrl)
+	if err != nil {
+		fmt.Print("NewRequest: %v", err.Error())
+		return User{}, err
+	}
+	defer resp.Body.Close()
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return User{}, err
+	}
+
+	var userResult []User
+	json.Unmarshal(bodyBytes, &userResult)
+	if len(userResult) == 0 {
+		return User{}, errors.New("no user found")
+	}
+
+	return userResult[0], nil
+}
